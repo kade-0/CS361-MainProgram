@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sign up - Multiplayer Service</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header>Multiplayer Service</header>
+<main>
+<section class="info">
+<div class="panel blue">
+<h3>Why create an account?</h3>
+<p>An account lets you register your games and get the API key and server endpoint for real-time multiplayer.</p>
+</div>
+<div class="panel orange">
+<h3>What does it cost?</h3>
+<p>It's free. We store only your username, email, and a password hash, your privacy guaranteed!</p>
+</div>
+</section>
+<form>
+<h1>Create your developer account</h1>
+<label for="username">Username</label>
+<input type="text" id="username" placeholder="kade" required>
+<label for="email">Email</label>
+<input type="email" id="email" placeholder="you@example.com" required>
+<details>
+<summary>Why we ask for your email</summary>
+To identify your account and let you log in.
+</details>
+<label for="password">Password</label>
+<input type="password" id="password" minlength="8" required>
+<div class="row">
+<label><input type="checkbox" id="show"> Show password</label>
+<span>At least 8 characters</span>
+</div>
+<button type="submit">Create account</button>
+<a href="/login">Already have an account? Log in</a>
+</form>
+</main>
+<script>
+document.getElementById("show").addEventListener("change", e => {
+  document.getElementById("password").type = e.target.checked ? "text" : "password";
+});
+</script>
+</body>
+</html>
