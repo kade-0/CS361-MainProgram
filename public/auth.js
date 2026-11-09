@@ -10,6 +10,8 @@ function showError(message) {
   box.hidden = !message;
 }
 
+// helper function for html setup
+
 function setupForm(endpoint, fields) {
   const form = document.querySelector("form");
   form.addEventListener("submit", async e => {

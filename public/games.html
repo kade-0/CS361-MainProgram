@@ -1,27 +1,71 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>My Games - Multiplayer Service</title>
-<link rel="stylesheet" href="/style.css">
-</head>
-<body>
-<header class="nav">
-<span>Multiplayer Service</span>
-<nav><span id="username"></span> | <a href="/games">My Games</a> | <a href="/logout">Log out</a></nav>
-</header>
-<main class="page">
-<h1>My Games</h1>
-<div class="empty">
-<h2>You haven't registered any games yet.</h2>
-<p>Registering a game gives it an API key and a real-time server endpoint, so your players can connect.</p>
-</div>
-</main>
-<script>
-fetch("/api/me").then(r => r.ok ? r.json() : Promise.reject()).then(u => {
-  document.getElementById("username").textContent = u.username;
-}).catch(() => location.href = "/login?expired=1");
-</script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>My Games - Multiplayer Service</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <header class="nav">
+      <span>Multiplayer Service</span>
+      <nav>
+        <span id="username"></span> | <a href="/games">My Games</a> |
+        <a href="/logout">Log out</a>
+      </nav>
+    </header>
+    <main class="page">
+      <div class="heading-row">
+        <h1>My Games</h1>
+        <a class="btn" id="register-btn" href="/games/new" hidden
+          >+ Register new game</a
+        >
+      </div>
+      <div id="content"></div>
+    </main>
+    <script src="/app.js"></script>
+    <script>
+      function renderEmpty(content) {
+        content.innerHTML = `
+          <div class="empty">
+          <h2>You haven't registered any games yet.</h2>
+          <p>Registering a game gives it an API key and a real-time server endpoint, so your players can connect.</p>
+          <h3>Getting started</h3>
+          <div class="steps-grid">
+          <div class="panel blue"><h3>1 Register your game</h3><p>Give it a name and a max player count.</p></div>
+          <div class="panel blue"><h3>2 Copy your API key</h3><p>Find it on your game's page.</p></div>
+          <div class="panel blue"><h3>3 Run a test connection</h3><p>Check that your game can actually connect to our servers.</p></div>
+          </div>
+          <a class="btn" href="/games/new">+ Register your first game</a>
+          </div>`;
+      }
+      function renderTable(content, { games, limit }) {
+        const rows = games
+          .map(
+            (g) => `
+            <tr>
+            <td>${esc(g.name)}</td>
+            <td>${g.maxPlayers}</td>
+            <td>${formatDate(g.createdAt)}</td>
+            <td><a class="btn-outline" href="/games/${g.id}">View details</a></td>
+            </tr>`,
+          )
+          .join("");
+        content.innerHTML = `
+          <table>
+          <thead><tr><th>Game name</th><th>Max players</th><th>Registered</th><th>Actions</th></tr></thead>
+          <tbody>${rows}</tbody>
+          </table>
+          <p class="usage">${games.length} of ${limit} games registered</p>`;
+        document.getElementById("register-btn").hidden = false;
+      }
+      async function loadGames() {
+        const { data } = await api("/api/games");
+        const content = document.getElementById("content");
+        if (!data.games.length) return renderEmpty(content);
+        renderTable(content, data);
+      }
+      loadGames();
+    </script>
+  </body>
 </html>

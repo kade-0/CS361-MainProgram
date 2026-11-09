@@ -4,8 +4,23 @@ const crypto = require("crypto");
 
 const db = new Database(path.join(__dirname, "data.db"));
 db.pragma("journal_mode = WAL");
+db.pragma("foreign_keys = ON");
 
 function initSchema() {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS games (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      public_id TEXT NOT NULL UNIQUE,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      name TEXT NOT NULL COLLATE NOCASE,
+      description TEXT,
+      max_players INTEGER NOT NULL,
+      api_key TEXT NOT NULL UNIQUE,
+      key_copied INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      UNIQUE (user_id, name)
+    )
+  `);
   // Create the initial schema for our Database.
   
   db.exec(`
@@ -54,6 +69,45 @@ function createUser(username, email, password) {
   return info.lastInsertRowid;
 }
 
+function newApiKey() {
+  return "mps_" + crypto.randomBytes(24).toString("hex");
+}
+
+function newPublicId() {
+  return "g_" + crypto.randomBytes(4).toString("hex");
+}
+
+function listGames(userId) {
+  return db.prepare("SELECT * FROM games WHERE user_id = ? ORDER BY created_at, id").all(userId);
+}
+
+function countGames(userId) {
+  return db.prepare("SELECT COUNT(*) AS n FROM games WHERE user_id = ?").get(userId).n;
+}
+
+function findGame(userId, id) {
+  return db.prepare("SELECT * FROM games WHERE user_id = ? AND id = ?").get(userId, id);
+}
+
+function findGameByName(userId, name) {
+  return db.prepare("SELECT * FROM games WHERE user_id = ? AND name = ?").get(userId, name);
+}
+
+function createGame(userId, { name, description, maxPlayers }) {
+  const info = db.prepare("INSERT INTO games (public_id, user_id, name, description, max_players, api_key) VALUES (?, ?, ?, ?, ?, ?)").run(newPublicId(), userId, name, description || null, maxPlayers, newApiKey());
+  return info.lastInsertRowid;
+}
+
+function regenerateApiKey(userId, id) {
+  const key = newApiKey();
+  db.prepare("UPDATE games SET api_key = ?, key_copied = 0 WHERE user_id = ? AND id = ?").run(key, userId, id);
+  return key;
+}
+
+function markKeyCopied(userId, id) {
+  db.prepare("UPDATE games SET key_copied = 1 WHERE user_id = ? AND id = ?").run(userId, id);
+}
+
 initSchema();
 
-module.exports = { db, findUserByEmail, findUserByUsername, findUserById, createUser, verifyPassword };
+module.exports = { db, findUserByEmail, findUserByUsername, findUserById, createUser, verifyPassword, listGames, countGames, findGame, findGameByName, createGame, regenerateApiKey, markKeyCopied };

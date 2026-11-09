@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Game details - Multiplayer Service</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <header class="nav">
+      <span>Multiplayer Service</span>
+      <nav>
+        <span id="username"></span> | <a href="/games">My Games</a> |
+        <a href="/logout">Log out</a>
+      </nav>
+    </header>
+    <main class="page">
+      <a class="back" href="/games">&larr; Back to My Games</a>
+      <div id="banner" class="banner" hidden></div>
+      <div id="not-found" hidden><p>Game not found.</p></div>
+      <div id="details" hidden>
+        <div class="title-row">
+          <h1 id="game-name"></h1>
+          <span class="meta" id="game-meta"></span>
+        </div>
+        <div class="next-steps">
+          <strong>Next steps:</strong>
+          <span>&check; 1 Register your game</span>
+          <span id="step2"></span>
+          <span id="step3">&#9744; 3 Run a test connection</span>
+        </div>
+        <div class="cards">
+          <section class="card">
+            <h2>Connection details</h2>
+            <label for="api-key">API key</label>
+            <div class="field-row">
+              <input type="text" id="api-key" class="mono" readonly />
+              <button type="button" class="btn-outline" id="show-key">
+                Show
+              </button>
+              <button type="button" class="btn-outline" id="copy-key">
+                Copy
+              </button>
+            </div>
+            <label for="endpoint">Server endpoint</label>
+            <div class="field-row">
+              <input type="text" id="endpoint" class="mono" readonly />
+              <button type="button" class="btn-outline" id="copy-endpoint">
+                Copy
+              </button>
+            </div>
+            <button type="button" class="btn-secondary" id="regen-btn">
+              Regenerate API key
+            </button>
+          </section>
+        </div>
+      </div>
+    </main>
+    <dialog id="regen-dialog">
+      <h2>Regenerate API key?</h2>
+      <p>
+        Your current key will stop working immediately. Any game client using it
+        will be disconnected until you update it with the new key.
+      </p>
+      <div class="actions">
+        <button type="button" class="btn-danger" id="regen-confirm">
+          Regenerate key
+        </button>
+        <button type="button" class="btn-secondary" id="regen-cancel">
+          Cancel
+        </button>
+      </div>
+    </dialog>
+    <script src="/app.js"></script>
+    <script>
+      const gameId = location.pathname.split("/").pop();
+      let game;
+      let keyVisible = false;
+      function maskKey(key) {
+        return "•".repeat(12) + key.slice(-4);
+      }
+      function renderKey() {
+        document.getElementById("api-key").value = keyVisible
+          ? game.apiKey
+          : maskKey(game.apiKey);
+        document.getElementById("show-key").textContent = keyVisible
+          ? "Hide"
+          : "Show";
+      }
+      function renderSteps() {
+        document.getElementById("step2").textContent =
+          (game.keyCopied ? "✓" : "☐") + " 2 Copy your API key";
+      }
+      function showBanner(message) {
+        const banner = document.getElementById("banner");
+        banner.textContent = "✓ " + message;
+        banner.hidden = false;
+      }
+      async function copyText(text, button) {
+        await navigator.clipboard.writeText(text);
+        button.textContent = "Copied";
+        setTimeout(() => (button.textContent = "Copy"), 1500);
+      }
+      async function copyKey(e) {
+        await copyText(game.apiKey, e.target);
+        if (game.keyCopied) return;
+        await api(`/api/games/${gameId}/key-copied`, { method: "POST" });
+        game.keyCopied = true;
+        renderSteps();
+      }
+      async function regenerateKey() {
+        const { data } = await api(`/api/games/${gameId}/regenerate-key`, {
+          method: "POST",
+        });
+        game.apiKey = data.apiKey;
+        game.keyCopied = false;
+        document.getElementById("regen-dialog").close();
+        renderKey();
+        renderSteps();
+        showBanner("API key regenerated.");
+      }
+      function setupEvents() {
+        const dialog = document.getElementById("regen-dialog");
+        document.getElementById("show-key").addEventListener("click", () => {
+          keyVisible = !keyVisible;
+          renderKey();
+        });
+        document.getElementById("copy-key").addEventListener("click", copyKey);
+        document
+          .getElementById("copy-endpoint")
+          .addEventListener("click", (e) => copyText(game.endpoint, e.target));
+        document
+          .getElementById("regen-btn")
+          .addEventListener("click", () => dialog.showModal());
+        document
+          .getElementById("regen-cancel")
+          .addEventListener("click", () => dialog.close());
+        document
+          .getElementById("regen-confirm")
+          .addEventListener("click", regenerateKey);
+      }
+      async function loadGame() {
+        const { ok, data } = await api(`/api/games/${gameId}`);
+        if (!ok) return (document.getElementById("not-found").hidden = false);
+        game = data;
+        document.title = `${game.name} - Multiplayer Service`;
+        document.getElementById("game-name").textContent = game.name;
+        document.getElementById("game-meta").textContent =
+          `Up to ${game.maxPlayers} players per session | Registered ${formatDate(game.createdAt)}`;
+        document.getElementById("endpoint").value = game.endpoint;
+        renderKey();
+        renderSteps();
+        document.getElementById("details").hidden = false;
+        if (new URLSearchParams(location.search).has("registered")) {
+          showBanner(`${game.name} was registered successfully.`);
+          history.replaceState(null, "", location.pathname);
+        }
+      }
+      setupEvents();
+      loadGame();
+    </script>
+  </body>
+</html>

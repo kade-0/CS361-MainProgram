@@ -1,36 +1,41 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Log in - Multiplayer Service</title>
-<link rel="stylesheet" href="/style.css">
-</head>
-<body>
-<header>Multiplayer Service</header>
-<main>
-<section class="info">
-<div class="panel blue">
-<h3>What is Multiplayer Service?</h3>
-<p>Add real-time online play to your game without building and hosting your own game servers.</p>
-<p>Log in to manage your games.</p>
-</div>
-</section>
-<form>
-<h1>Log in</h1>
-<div id="error" class="error" hidden></div>
-<label for="email">Email</label>
-<input type="email" id="email" placeholder="you@example.com" required>
-<label for="password">Password</label>
-<input type="password" id="password" required>
-<div class="row">
-<label><input type="checkbox" id="show"> Show password</label>
-</div>
-<button type="submit">Log in</button>
-<a href="/signup">Don't have an account? Sign up</a>
-</form>
-</main>
-<script src="/auth.js"></script>
-<script>setupForm("/api/login", ["email", "password"]);</script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Log in - Multiplayer Service</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <header>Multiplayer Service</header>
+    <main>
+      <section class="info">
+        <div class="panel blue">
+          <h3>What is Multiplayer Service?</h3>
+          <p>
+            Add real-time online play to your game without building and hosting
+            your own game servers.
+          </p>
+          <p>Log in to manage your games.</p>
+        </div>
+      </section>
+      <form>
+        <h1>Log in</h1>
+        <div id="error" class="error" hidden></div>
+        <label for="email">Email</label>
+        <input type="email" id="email" placeholder="you@example.com" required />
+        <label for="password">Password</label>
+        <input type="password" id="password" required />
+        <div class="row">
+          <label><input type="checkbox" id="show" /> Show password</label>
+        </div>
+        <button type="submit">Log in</button>
+        <a href="/signup">Don't have an account? Sign up</a>
+      </form>
+    </main>
+    <script src="/auth.js"></script>
+    <script>
+      setupForm("/api/login", ["email", "password"]);
+    </script>
+  </body>
 </html>

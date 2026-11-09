@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Register game - Multiplayer Service</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <header class="nav">
+      <span>Multiplayer Service</span>
+      <nav>
+        <span id="username"></span> | <a href="/games">My Games</a> |
+        <a href="/logout">Log out</a>
+      </nav>
+    </header>
+    <main class="page">
+      <a class="back" href="/games">&larr; Back to My Games</a>
+      <h1>Register a new game</h1>
+      <div class="split">
+        <section class="info">
+          <div class="panel blue">
+            <h3>Why register?</h3>
+            <p>
+              Registering gives your game an API key and a real-time server
+              endpoint so players can connect.
+            </p>
+          </div>
+          <div class="panel orange">
+            <h3>What does it cost?</h3>
+            <p>It is free. Each account can register up to 5 games.</p>
+          </div>
+        </section>
+        <form>
+          <div id="error" class="error" hidden></div>
+          <label for="name">Game name *</label>
+          <input
+            type="text"
+            id="name"
+            placeholder="Starcraft the 3rd"
+            minlength="3"
+            maxlength="40"
+            required
+          />
+          <span class="hint">3 to 40 characters</span>
+          <label for="description">Description (optional)</label>
+          <input
+            type="text"
+            id="description"
+            placeholder="A real time strategy game"
+            maxlength="200"
+          />
+          <label for="maxPlayers">Max players per session *</label>
+          <select id="maxPlayers"></select>
+          <span class="hint">Between 2 and 16 players</span>
+          <div class="actions">
+            <button type="submit">Register game</button>
+            <button
+              type="button"
+              class="btn-secondary"
+              onclick="location.href='/games'"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </main>
+    <script src="/app.js"></script>
+    <script>
+      function fillPlayerOptions() {
+        const select = document.getElementById("maxPlayers");
+        for (let n = 2; n <= 16; n++)
+          select.add(new Option(n, n, false, n === 4));
+      }
+      async function submitGame(e) {
+        e.preventDefault();
+        showError("");
+        const body = {
+          name: document.getElementById("name").value,
+          description: document.getElementById("description").value,
+          maxPlayers: Number(document.getElementById("maxPlayers").value),
+        };
+        const { ok, data } = await api("/api/games", { method: "POST", body });
+        if (!ok) return showError(data.error);
+        location.href = data.redirect;
+      }
+      fillPlayerOptions();
+      document.querySelector("form").addEventListener("submit", submitGame);
+    </script>
+  </body>
+</html>
