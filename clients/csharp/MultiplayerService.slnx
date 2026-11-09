@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="MultiplayerService.Client/MultiplayerService.Client.csproj" />
+  <Project Path="TestClient/TestClient.csproj" />
+</Solution>

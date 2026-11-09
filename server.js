@@ -3,6 +3,7 @@ const path = require("path");
 const session = require("express-session");
 const SqliteStore = require("better-sqlite3-session-store")(session);
 const store = require("./db");
+const realtime = require("./realtime");
 
 const PORT = process.env.PORT || 3000;
 const PUBLIC_DIR = path.join(__dirname, "public");
@@ -90,7 +91,7 @@ function gameSummary(game) {
 }
 
 function gameDetail(game) {
-  return { ...gameSummary(game), description: game.description, apiKey: game.api_key, endpoint: `${WS_BASE_URL}/${game.public_id}`, keyCopied: !!game.key_copied };
+  return { ...gameSummary(game), description: game.description, apiKey: game.api_key, endpoint: `${WS_BASE_URL}/${game.public_id}`, keyCopied: !!game.key_copied, tested: !!game.tested_at };
 }
 
 // game validation function
@@ -132,7 +133,9 @@ function handleGetGame(req, res) {
 }
 
 function handleRegenerateKey(req, res) {
-  res.json({ apiKey: store.regenerateApiKey(req.session.userId, req.game.id) });
+  const apiKey = store.regenerateApiKey(req.session.userId, req.game.id);
+  realtime.disconnectGame(req.game.public_id);
+  res.json({ apiKey });
 }
 
 function handleKeyCopied(req, res) {
@@ -176,7 +179,8 @@ function startServer() {
   const app = express();
   setupSQLiteSession(app);
   setupRoutes(app);
-  app.listen(PORT, () => console.log(`Running at http://localhost:${PORT}`));
+  const server = app.listen(PORT, () => console.log(`Running at http://localhost:${PORT}`));
+  realtime.attachRealtime(server);
 }
 
 startServer();

@@ -289,6 +289,34 @@ dialog::backdrop {
 dialog h2 {
   margin-top: 0;
 }
+.card .meta {
+  margin: 0 0 4px;
+}
+.status {
+  color: #6b7280;
+  margin: 12px 0 4px;
+}
+.status.ok {
+  color: #1e7a3a;
+  font-weight: bold;
+}
+.status.fail {
+  color: #b42318;
+  font-weight: bold;
+}
+.log {
+  margin: 6px 0 0;
+  padding: 8px;
+  border: 1px solid #9aa4b2;
+  background: #f5f6f8;
+  color: #1f2937;
+  font-size: 0.85rem;
+  white-space: pre-wrap;
+}
+button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
 @media (max-width: 700px) {
   main, .split, .cards {
     flex-direction: column-reverse;

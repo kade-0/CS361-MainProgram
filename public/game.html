@@ -27,7 +27,7 @@
           <strong>Next steps:</strong>
           <span>&check; 1 Register your game</span>
           <span id="step2"></span>
-          <span id="step3">&#9744; 3 Run a test connection</span>
+          <span id="step3"></span>
         </div>
         <div class="cards">
           <section class="card">
@@ -53,7 +53,24 @@
               Regenerate API key
             </button>
           </section>
+          <section class="card">
+            <h2>Test connection</h2>
+            <p class="meta">
+              Opens a test client to your game's endpoint using your API key.
+            </p>
+            <button type="button" id="test-btn">Run test connection</button>
+            <p id="test-status" class="status">Status: not tested yet</p>
+            <details id="test-log-box" open hidden>
+              <summary>Connection log</summary>
+              <pre id="test-log" class="log"></pre>
+            </details>
+          </section>
         </div>
+        <p class="meta">
+          Run the test connection here, or connect your own client to the server
+          endpoint above. Test sessions are free and end automatically after 60
+          seconds.
+        </p>
       </div>
     </main>
     <dialog id="regen-dialog">
@@ -90,6 +107,70 @@
       function renderSteps() {
         document.getElementById("step2").textContent =
           (game.keyCopied ? "✓" : "☐") + " 2 Copy your API key";
+        document.getElementById("step3").textContent =
+          (game.tested ? "✓" : "☐") + " 3 Run a test connection";
+      }
+      function logLine(text) {
+        const time = new Date().toLocaleTimeString("en-GB");
+        document.getElementById("test-log").textContent += `${time} ${text}\n`;
+      }
+      function setStatus(text, state) {
+        const status = document.getElementById("test-status");
+        status.textContent = text;
+        status.className = "status " + (state || "");
+      }
+      function finishTest(ws, timer) {
+        clearTimeout(timer);
+        document.getElementById("test-btn").disabled = false;
+        document.getElementById("test-btn").textContent = "Run again";
+        if (ws.readyState <= WebSocket.OPEN) ws.close(1000);
+      }
+      function runTest() {
+        const button = document.getElementById("test-btn");
+        button.disabled = true;
+        document.getElementById("test-log").textContent = "";
+        document.getElementById("test-log-box").hidden = false;
+        setStatus("Connecting...");
+        logLine("Opening connection");
+        const url = `${game.endpoint}?key=${encodeURIComponent(game.apiKey)}&test=1`;
+        const ws = new WebSocket(url);
+        let done = false;
+        const timer = setTimeout(() => {
+          if (done) return;
+          done = true;
+          logLine("Timed out after 10 seconds");
+          setStatus("Could not connect. The server did not respond.", "fail");
+          finishTest(ws, timer);
+        }, 10000);
+        ws.onmessage = (e) => {
+          const msg = JSON.parse(e.data);
+          if (msg.type === "welcome") {
+            logLine("API key accepted");
+            ws.send(JSON.stringify({ type: "ping", t: performance.now() }));
+          }
+          if (msg.type === "pong") {
+            const ms = Math.round(performance.now() - msg.t);
+            const clients = msg.players === 1 ? "1 client" : `${msg.players} clients`;
+            done = true;
+            logLine(`Connected (${ms} ms)`);
+            setStatus(`● Connected: ${ms} ms, ${clients}`, "ok");
+            game.tested = true;
+            renderSteps();
+            finishTest(ws, timer);
+          }
+          if (msg.type === "error") logLine(msg.message);
+        };
+        ws.onclose = (e) => {
+          if (done) return;
+          done = true;
+          logLine(`Connection closed (code ${e.code})`);
+          const text =
+            e.code === 4003
+              ? "Could not connect. The session is full."
+              : "Could not connect. Check that the API key is correct.";
+          setStatus(text, "fail");
+          finishTest(ws, timer);
+        };
       }
       function showBanner(message) {
         const banner = document.getElementById("banner");
@@ -138,6 +219,7 @@
         document
           .getElementById("regen-confirm")
           .addEventListener("click", regenerateKey);
+        document.getElementById("test-btn").addEventListener("click", runTest);
       }
       async function loadGame() {
         const { ok, data } = await api(`/api/games/${gameId}`);

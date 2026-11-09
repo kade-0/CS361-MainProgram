@@ -32,6 +32,14 @@ function initSchema() {
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     )
   `);
+  addColumnIfMissing("games", "tested_at", "TEXT");
+}
+
+// adds a column to an existing table so older databases keep working
+
+function addColumnIfMissing(table, column, type) {
+  const columns = db.prepare(`PRAGMA table_info(${table})`).all();
+  if (!columns.some(c => c.name === column)) db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${type}`);
 }
 
 // simple password hashing and verification functions
@@ -108,6 +116,16 @@ function markKeyCopied(userId, id) {
   db.prepare("UPDATE games SET key_copied = 1 WHERE user_id = ? AND id = ?").run(userId, id);
 }
 
+// real-time server query functions
+
+function findGameByPublicId(publicId) {
+  return db.prepare("SELECT * FROM games WHERE public_id = ?").get(publicId);
+}
+
+function markTested(id) {
+  db.prepare("UPDATE games SET tested_at = datetime('now') WHERE id = ?").run(id);
+}
+
 initSchema();
 
-module.exports = { db, findUserByEmail, findUserByUsername, findUserById, createUser, verifyPassword, listGames, countGames, findGame, findGameByName, createGame, regenerateApiKey, markKeyCopied };
+module.exports = { db, findUserByEmail, findUserByUsername, findUserById, createUser, verifyPassword, listGames, countGames, findGame, findGameByName, createGame, regenerateApiKey, markKeyCopied, findGameByPublicId, markTested };

@@ -1,2 +1,5 @@
 node_modules/
 data.db*
+clients/csharp/**/bin/
+clients/csharp/**/obj/
+clients/csharp/.idea/
