@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Games - Multiplayer Service</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header class="nav">
+<span>Multiplayer Service</span>
+<nav><span id="username"></span> | <a href="/games">My Games</a> | <a href="/logout">Log out</a></nav>
+</header>
+<main class="page">
+<h1>My Games</h1>
+<div class="empty">
+<h2>You haven't registered any games yet.</h2>
+<p>Registering a game gives it an API key and a real-time server endpoint, so your players can connect.</p>
+</div>
+</main>
+<script>
+fetch("/api/me").then(r => r.ok ? r.json() : Promise.reject()).then(u => {
+  document.getElementById("username").textContent = u.username;
+}).catch(() => location.href = "/login?expired=1");
+</script>
+</body>
+</html>

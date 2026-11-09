@@ -21,6 +21,7 @@
 </section>
 <form>
 <h1>Create your developer account</h1>
+<div id="error" class="error" hidden></div>
 <label for="username">Username</label>
 <input type="text" id="username" placeholder="kade" required>
 <label for="email">Email</label>
@@ -39,10 +40,7 @@ To identify your account and let you log in.
 <a href="/login">Already have an account? Log in</a>
 </form>
 </main>
-<script>
-document.getElementById("show").addEventListener("change", e => {
-  document.getElementById("password").type = e.target.checked ? "text" : "password";
-});
-</script>
+<script src="/auth.js"></script>
+<script>setupForm("/api/signup", ["username", "email", "password"]);</script>
 </body>
 </html>
